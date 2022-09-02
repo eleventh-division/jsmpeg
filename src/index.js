@@ -1,19 +1,30 @@
 const express = require('express')
-const { resolve } = require('path')
 const app = express()
-const port = 3000
+require('express-ws')(app)
 
-const { loadPlayer } = require('rtsp-relay/browser')
-const { proxy, scriptUrl } = require('rtsp-relay')(app)
+const {loadPlayer} = require('rtsp-relay/browser')
+const {proxy, scriptUrl} = require('rtsp-relay')(app)
 
 const handler = proxy({
   url: `rtsp://artem:artem12345@10.0.1.15:554/Streaming/channels/501`,
-  // if your RTSP stream need credentials, include them in the URL as above
   verbose: false,
-});
+  transport: 'tcp'
+})
 
-// the endpoint our RTSP uses
-app.ws('/api/stream', handler);
+app.ws('/api/stream', handler)
+
+app.get('/api', (req, res) => {
+  if (!req?.query?.channel) {
+    res.status(400).json({ message: "Fuck you!" })
+    return
+  }
+
+  const channel = req.query.channel
+
+  const url = `rtsp://artem:artem12345@10.0.1.15:554/Streaming/channels/${ channel }01`
+  // TODO change handler
+  res.json({ message: 'ok' })
+})
 
 // this is an example html page to view the stream
 app.get('/', (req, res) => {
@@ -25,9 +36,11 @@ app.get('/', (req, res) => {
       <meta http-equiv="X-UA-Compatible" content="ie=edge">
       <title>Streaming IP Camera Nodejs</title>
     </head>
-    <body>
+    <body style="padding: 0; margin: 0">
       <div>
-        <canvas id='canvas'></canvas>
+        <div style="position: relative; width: 100vw; padding-bottom: 56.25%">
+            <canvas id='canvas' style="position: absolute; left: 0; top: 0; width: 100%; height: 100%"></canvas>
+        </div>
         <script src='${scriptUrl}'></script>
         <script>
           loadPlayer({
@@ -41,6 +54,10 @@ app.get('/', (req, res) => {
   `)
 })
 
-app.listen(port, () => {
-  console.log(`Listening on port ${port}`)
-})
+function start(port) {
+  app.listen(port, () => {
+    console.log(`Listening on port ${port}`)
+  })
+}
+
+start(3010)

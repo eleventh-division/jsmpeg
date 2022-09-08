@@ -1,32 +1,17 @@
 const express = require('express')
 const app = express()
-require('express-ws')(app)
 
 const {loadPlayer} = require('rtsp-relay/browser')
 const {proxy, scriptUrl} = require('rtsp-relay')(app)
 
-const handler = proxy({
-  url: `rtsp://artem:artem12345@10.0.1.15:554/Streaming/channels/501`,
-  verbose: false,
-  transport: 'tcp'
+app.ws('/api/stream/:channel', (ws, req) => {
+  proxy({
+      url: `rtsp://artem:artem12345@10.0.1.15:554/Streaming/channels/${req.params.channel}01`,
+      // url: 'rtsp://admin:leery8bit@10.0.1.87',
+      transport: "tcp"
+  })(ws)
 })
 
-app.ws('/api/stream', handler)
-
-app.get('/api', (req, res) => {
-  if (!req?.query?.channel) {
-    res.status(400).json({ message: "Fuck you!" })
-    return
-  }
-
-  const channel = req.query.channel
-
-  const url = `rtsp://artem:artem12345@10.0.1.15:554/Streaming/channels/${ channel }01`
-  // TODO change handler
-  res.json({ message: 'ok' })
-})
-
-// this is an example html page to view the stream
 app.get('/', (req, res) => {
   res.send(`
     <html lang="en">
@@ -38,15 +23,27 @@ app.get('/', (req, res) => {
     </head>
     <body style="padding: 0; margin: 0">
       <div>
-        <div style="position: relative; width: 100vw; padding-bottom: 56.25%">
-            <canvas id='canvas' style="position: absolute; left: 0; top: 0; width: 100%; height: 100%"></canvas>
+        <form id="frm">
+            <label>Канал</label>
+            <input id="channel" type="text" value="1">
+            <button type="submit">Применить</button>
+        </form>
+        <div id="div-canvas" style="position: relative; width: 100vw; padding-bottom: 56.25%">
+            <canvas id="canvas" style="position: absolute; left: 0; top: 0; width: 100%; height: 100%"></canvas>
         </div>
         <script src='${scriptUrl}'></script>
         <script>
-          loadPlayer({
-            url: 'ws://' + location.host + '/api/stream',
-            canvas: document.getElementById('canvas')
-          });
+          async function getChannel(e) {
+            e.preventDefault()
+            e.stopPropagation()
+            
+            await loadPlayer({
+                url: 'ws://' + location.host + '/api/stream/' + document.getElementById('channel').value,
+                canvas: document.getElementById('canvas')
+            })
+          }
+          
+          document.getElementById('frm').onsubmit = getChannel
         </script>
       </div>
     </body>

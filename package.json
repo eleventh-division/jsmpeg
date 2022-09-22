@@ -25,6 +25,7 @@
   "homepage": "https://github.com/xpcrts/Steaming-IP-Camera-Nodejs#readme",
   "dependencies": {
     "express": "^4.18.1",
+    "express-ws": "^5.0.2",
     "nodemon": "^2.0.19",
     "rtsp-relay": "^1.6.1"
   }

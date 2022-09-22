@@ -1,5 +1,6 @@
 const express = require('express')
 const app = express()
+const expressWs = require('express-ws')(app);
 
 const {loadPlayer} = require('rtsp-relay/browser')
 const {proxy, scriptUrl} = require('rtsp-relay')(app)
@@ -10,9 +11,10 @@ app.ws('/api/stream', (ws, req) => {
 
   proxy({
     // url: `rtsp://artem:artem12345@10.0.1.15:554/Streaming/channels/${req.params.channel}01`,
-    // url: 'rtsp://admin:leery8bit@10.0.1.87',
+    // url: 'rtsp://admin:leery8bit@10.0.1.114',
     url: req.query.url,
-    transport: "tcp"
+    transport: "tcp",
+    // verbose: true
   })(ws)
 })
 
